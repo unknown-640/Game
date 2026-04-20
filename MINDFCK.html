@@ -1,0 +1,2170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINDFCK — The Social Deception Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   CSS VARIABLES & RESET
+   ============================================ */
+:root {
+  --bg:        #0a0a0f;
+  --surface:   #13131c;
+  --card:      #1c1c2e;
+  --border:    #2a2a42;
+  --primary:   #7c3aed;
+  --primary-h: #6d28d9;
+  --accent:    #f59e0b;
+  --accent-h:  #d97706;
+  --success:   #10b981;
+  --danger:    #ef4444;
+  --danger-h:  #dc2626;
+  --text:      #f1f0ff;
+  --muted:     #8b8baa;
+  --glow:      rgba(124,58,237,0.35);
+  --glow-acc:  rgba(245,158,11,0.3);
+  --font-head: 'Bebas Neue', cursive;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+  --r:         10px;
+  --r-lg:      16px;
+  --trans:     all 0.2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============================================
+   NOISE TEXTURE OVERLAY
+   ============================================ */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.6;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+#app{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* ============================================
+   SCREENS
+   ============================================ */
+.screen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  padding:24px;
+  animation:fadeIn .35s ease;
+  overflow-y:auto;
+}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+.logo{
+  font-family:var(--font-head);
+  font-size:clamp(52px,10vw,88px);
+  letter-spacing:6px;
+  background:linear-gradient(135deg,#7c3aed,#f59e0b);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1;
+  text-shadow:none;
+  position:relative;
+}
+.logo-sub{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:4px;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-top:4px;
+  text-align:center;
+}
+h2{
+  font-family:var(--font-head);
+  font-size:clamp(28px,5vw,42px);
+  letter-spacing:3px;
+  color:var(--text);
+}
+h3{
+  font-family:var(--font-mono);
+  font-size:13px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+label{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:block;
+  margin-bottom:6px;
+}
+
+/* ============================================
+   CARD
+   ============================================ */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:28px;
+  width:100%;
+  max-width:480px;
+  box-shadow:0 0 40px rgba(0,0,0,.4);
+}
+.card-wide{max-width:700px}
+.card-full{max-width:960px}
+
+/* ============================================
+   INPUTS
+   ============================================ */
+input[type="text"],input[type="number"],select,textarea{
+  width:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  padding:12px 16px;
+  outline:none;
+  transition:var(--trans);
+  resize:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--glow);
+}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+select option{background:var(--card)}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:13px 28px;
+  border:none;
+  border-radius:var(--r);
+  cursor:pointer;
+  transition:var(--trans);
+  white-space:nowrap;
+  position:relative;
+  overflow:hidden;
+}
+.btn::after{
+  content:'';
+  position:absolute;inset:0;
+  background:rgba(255,255,255,.08);
+  opacity:0;
+  transition:opacity .15s;
+}
+.btn:hover::after{opacity:1}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 0 20px var(--glow)}
+.btn-primary:hover{background:var(--primary-h);box-shadow:0 0 30px var(--glow)}
+.btn-accent{background:var(--accent);color:#000;box-shadow:0 0 20px var(--glow-acc)}
+.btn-accent:hover{background:var(--accent-h)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:var(--danger-h)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--text)}
+.btn-lg{padding:16px 36px;font-size:14px;letter-spacing:3px;border-radius:var(--r-lg)}
+.btn-sm{padding:8px 16px;font-size:10px}
+.btn-block{width:100%}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap}
+
+/* ============================================
+   BADGE / PILL
+   ============================================ */
+.badge{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:3px 10px;
+  border-radius:99px;
+  font-weight:700;
+}
+.badge-primary{background:rgba(124,58,237,.25);color:var(--primary);border:1px solid rgba(124,58,237,.4)}
+.badge-accent{background:rgba(245,158,11,.2);color:var(--accent);border:1px solid rgba(245,158,11,.3)}
+.badge-danger{background:rgba(239,68,68,.2);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.badge-success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.badge-muted{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+
+/* ============================================
+   FORM GROUPS
+   ============================================ */
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+.row{display:flex;gap:12px}
+.row>.field{flex:1}
+
+/* ============================================
+   DIVIDER
+   ============================================ */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:20px 0;
+  color:var(--muted);
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:2px;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ============================================
+   PLAYER LIST
+   ============================================ */
+.player-list{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:200px;overflow-y:auto;
+}
+.player-item{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:10px 14px;
+  transition:var(--trans);
+}
+.player-item.host{border-color:rgba(124,58,237,.5)}
+.player-avatar{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+  background:var(--card);
+  border:1px solid var(--border);
+}
+.player-name{font-weight:600;flex:1;font-size:14px}
+.player-score{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+
+/* ============================================
+   GAME HUD
+   ============================================ */
+#game-screen{
+  justify-content:flex-start;
+  padding:0;
+}
+#game-hud{
+  display:flex;align-items:center;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:10px 20px;
+  gap:16px;
+  flex-shrink:0;
+  width:100%;
+}
+.hud-logo{
+  font-family:var(--font-head);
+  font-size:22px;
+  letter-spacing:3px;
+  background:linear-gradient(135deg,#7c3aed,#f59e0b);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hud-spacer{flex:1}
+.hud-stat{
+  text-align:center;
+  display:flex;flex-direction:column;
+  gap:2px;
+}
+.hud-stat-label{
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.hud-stat-value{
+  font-family:var(--font-mono);
+  font-size:16px;
+  font-weight:700;
+  color:var(--text);
+}
+#timer-value{color:var(--accent);transition:color .3s}
+#timer-value.urgent{color:var(--danger);animation:pulse-timer .5s ease infinite alternate}
+@keyframes pulse-timer{from{transform:scale(1)}to{transform:scale(1.15)}}
+
+/* ============================================
+   GAME BODY
+   ============================================ */
+#game-body{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+  width:100%;
+}
+#sidebar{
+  width:220px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  flex-shrink:0;
+}
+#sidebar-title{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--border);
+}
+#sidebar-players{padding:10px;display:flex;flex-direction:column;gap:6px}
+.sb-player{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;
+  border-radius:var(--r);
+  background:var(--card);
+  border:1px solid var(--border);
+  transition:var(--trans);
+}
+.sb-player.me{border-color:rgba(124,58,237,.5);background:rgba(124,58,237,.08)}
+.sb-player-avatar{font-size:18px;line-height:1}
+.sb-player-info{flex:1;min-width:0}
+.sb-player-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-player-score{font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+.sb-player-streak{font-size:9px;color:var(--muted)}
+
+/* ============================================
+   MAIN GAME AREA
+   ============================================ */
+#game-main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding:20px;
+  gap:16px;
+}
+
+/* ============================================
+   PHASE PANELS
+   ============================================ */
+.phase-panel{display:none;flex-direction:column;gap:16px;height:100%;animation:fadeIn .3s ease}
+.phase-panel.active{display:flex}
+
+/* SUBMIT PHASE */
+#submit-prompt{
+  background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(245,158,11,.1));
+  border:1px solid rgba(124,58,237,.3);
+  border-radius:var(--r-lg);
+  padding:20px;
+  display:flex;flex-direction:column;gap:8px;
+}
+#submit-prompt h3{margin:0}
+#the-secret-word{
+  font-family:var(--font-head);
+  font-size:clamp(32px,5vw,52px);
+  letter-spacing:4px;
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1.1;
+}
+#submit-hint{font-size:13px;color:var(--muted)}
+
+.clue-builder{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:18px;
+  flex:1;
+  display:flex;flex-direction:column;gap:12px;
+}
+#clue-textarea{
+  flex:1;
+  min-height:80px;
+  font-size:20px;
+  font-family:var(--font-body);
+  resize:none;
+}
+.emoji-bar{
+  display:flex;gap:6px;flex-wrap:wrap;
+}
+.emoji-btn{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:6px 10px;
+  font-size:20px;
+  cursor:pointer;
+  transition:var(--trans);
+  line-height:1;
+}
+.emoji-btn:hover{background:var(--border);transform:scale(1.2)}
+
+/* VOTE PHASE */
+#vote-area{
+  display:flex;flex-direction:column;gap:12px;
+  flex:1;overflow-y:auto;
+}
+.vote-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:16px 20px;
+  display:flex;align-items:center;gap:16px;
+  transition:var(--trans);
+  cursor:pointer;
+}
+.vote-card:hover{border-color:var(--primary);box-shadow:0 0 16px var(--glow)}
+.vote-card.selected{border-color:var(--primary);background:rgba(124,58,237,.12);box-shadow:0 0 20px var(--glow)}
+.vote-card.voted{pointer-events:none}
+.vote-card.correct-reveal{border-color:var(--success);background:rgba(16,185,129,.1)}
+.vote-card.wrong-reveal{border-color:var(--danger);background:rgba(239,68,68,.08)}
+.vote-clue-text{font-size:22px;flex:1;word-break:break-word}
+.vote-author{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:1px}
+.vote-bar{height:4px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden}
+.vote-bar-fill{height:100%;background:var(--primary);border-radius:2px;transition:width .6s ease;width:0}
+.vote-count{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px}
+
+/* REVEAL PHASE */
+#reveal-area{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;gap:20px;text-align:center;
+}
+#reveal-word{
+  font-family:var(--font-head);
+  font-size:clamp(48px,8vw,80px);
+  letter-spacing:5px;
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:revealPop .5s cubic-bezier(.68,-0.55,.265,1.55);
+}
+@keyframes revealPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+#reveal-subtitle{font-size:14px;color:var(--muted);font-family:var(--font-mono);letter-spacing:2px;text-transform:uppercase}
+#round-scores{display:flex;flex-direction:column;gap:8px;width:100%;max-width:400px}
+.round-score-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:10px 16px;
+}
+.round-score-name{flex:1;font-weight:600}
+.round-score-delta{font-family:var(--font-mono);font-weight:700}
+.delta-pos{color:var(--success)}
+.delta-neg{color:var(--danger)}
+.delta-zero{color:var(--muted)}
+
+/* CHAOS EVENT */
+#chaos-banner{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:500;
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+  animation:fadeIn .3s ease;
+}
+#chaos-banner.show{display:flex}
+#chaos-icon{font-size:72px;animation:chaosWiggle .5s ease infinite alternate}
+@keyframes chaosWiggle{from{transform:rotate(-15deg) scale(1)}to{transform:rotate(15deg) scale(1.1)}}
+#chaos-title{
+  font-family:var(--font-head);
+  font-size:54px;
+  letter-spacing:4px;
+  color:var(--danger);
+  text-shadow:0 0 30px rgba(239,68,68,.7);
+}
+#chaos-desc{
+  font-family:var(--font-mono);
+  font-size:14px;
+  color:var(--muted);
+  letter-spacing:1px;
+  text-align:center;
+  max-width:400px;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+#toast-container{
+  position:fixed;bottom:24px;right:24px;
+  display:flex;flex-direction:column;gap:10px;
+  z-index:1000;
+  pointer-events:none;
+}
+.toast{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:12px 18px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:1px;
+  max-width:300px;
+  animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;
+  pointer-events:auto;
+  display:flex;align-items:center;gap:10px;
+}
+.toast.success{border-color:var(--success);color:var(--success)}
+.toast.danger{border-color:var(--danger);color:var(--danger)}
+.toast.info{border-color:var(--primary);color:var(--primary)}
+.toast.accent{border-color:var(--accent);color:var(--accent)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
+
+/* ============================================
+   FINAL SCOREBOARD
+   ============================================ */
+#final-board{
+  display:flex;flex-direction:column;gap:10px;
+  width:100%;max-width:480px;
+  margin:16px 0;
+}
+.final-row{
+  display:flex;align-items:center;gap:14px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:14px 18px;
+  transition:var(--trans);
+  animation:slideIn .4s ease both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.final-rank{
+  font-family:var(--font-head);
+  font-size:28px;
+  width:32px;text-align:center;
+  color:var(--muted);
+}
+.final-row.rank-1{border-color:var(--accent);box-shadow:0 0 24px var(--glow-acc)}
+.final-row.rank-1 .final-rank{color:var(--accent)}
+.final-row.rank-2 .final-rank{color:#9ca3af}
+.final-row.rank-3 .final-rank{color:#a16207}
+.final-avatar{font-size:24px}
+.final-name{flex:1;font-weight:600;font-size:15px}
+.final-pts{font-family:var(--font-mono);font-weight:700;font-size:16px;color:var(--primary)}
+.final-betrayals{font-family:var(--font-mono);font-size:10px;color:var(--danger);letter-spacing:1px}
+
+/* ============================================
+   LOBBY CODE DISPLAY
+   ============================================ */
+.lobby-code{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+}
+.lobby-code-text{
+  font-family:var(--font-mono);
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:8px;
+  color:var(--accent);
+  flex:1;
+}
+.copy-btn{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  color:var(--muted);
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:1px;
+  padding:8px 14px;
+  cursor:pointer;
+  transition:var(--trans);
+  text-transform:uppercase;
+}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ============================================
+   PROGRESS BAR (ROUND)
+   ============================================ */
+#round-progress{
+  height:3px;background:var(--border);
+  position:relative;flex-shrink:0;
+  width:100%;
+}
+#round-progress-fill{
+  position:absolute;left:0;top:0;height:100%;
+  background:linear-gradient(90deg,var(--primary),var(--accent));
+  transition:width 1s linear;
+  border-radius:2px;
+}
+
+/* ============================================
+   WAIT MESSAGE
+   ============================================ */
+.wait-spinner{
+  width:36px;height:36px;
+  border:3px solid var(--border);
+  border-top-color:var(--primary);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wait-box{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding:32px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  text-align:center;
+}
+.wait-text{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media(max-width:640px){
+  #sidebar{display:none}
+  .card{padding:20px}
+  #the-secret-word{font-size:28px}
+}
+
+/* ============================================
+   CHAT FEED
+   ============================================ */
+#chat-feed{
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  padding:10px 16px;
+  max-height:110px;
+  overflow-y:auto;
+  flex-shrink:0;
+  display:flex;flex-direction:column;gap:4px;
+}
+.chat-msg{font-size:12px;color:var(--muted)}
+.chat-msg strong{color:var(--text)}
+.chat-msg.system{color:var(--primary);font-style:italic}
+.chat-msg.chaos{color:var(--danger);font-weight:700}
+
+/* ============================================
+   FRAMING MECHANIC (Social Pressure UI)
+   ============================================ */
+#frame-overlay{
+  display:none;
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.8);
+  z-index:100;
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+  padding:24px;
+}
+#frame-overlay.show{display:flex}
+#frame-title{
+  font-family:var(--font-head);
+  font-size:38px;
+  letter-spacing:3px;
+  color:var(--danger);
+  text-align:center;
+}
+#frame-desc{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  max-width:400px;
+  line-height:1.8;
+}
+.frame-target-list{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+}
+.frame-target-btn{
+  background:var(--card);
+  border:2px solid var(--danger);
+  border-radius:var(--r);
+  padding:10px 20px;
+  color:var(--text);
+  font-family:var(--font-mono);
+  font-size:12px;
+  letter-spacing:1px;
+  cursor:pointer;
+  transition:var(--trans);
+  display:flex;align-items:center;gap:8px;
+}
+.frame-target-btn:hover{background:rgba(239,68,68,.15);transform:scale(1.05)}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SCREEN: HOME ============ -->
+  <div class="screen active" id="home-screen">
+    <div class="logo">MINDFCK</div>
+    <div class="logo-sub">The Social Deception Game</div>
+    <div style="height:32px"></div>
+    <div class="card">
+      <div class="field">
+        <label>Your Display Name</label>
+        <input type="text" id="player-name-input" placeholder="e.g. ChaosAgent" maxlength="20">
+      </div>
+      <div class="field">
+        <label>Your Avatar</label>
+        <div id="avatar-picker" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+      </div>
+      <div class="divider">Choose Your Path</div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="UI.showCreateLobby()">⚡ Create Lobby</button>
+        <button class="btn btn-ghost btn-block" onclick="UI.showJoinLobby()">🔗 Join Game</button>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-align:center">
+      2-8 PLAYERS • TEXT / EMOJI / GIF • DECEPTION BASED
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: CREATE LOBBY ============ -->
+  <div class="screen" id="create-screen">
+    <div style="text-align:center;margin-bottom:24px">
+      <div class="logo" style="font-size:42px">MINDFCK</div>
+      <div class="logo-sub">Host a New Game</div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label>Rounds</label>
+          <select id="cfg-rounds">
+            <option value="3">3 Rounds</option>
+            <option value="5" selected>5 Rounds</option>
+            <option value="7">7 Rounds</option>
+            <option value="10">10 Rounds</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Submit Timer</label>
+          <select id="cfg-timer">
+            <option value="30">30 sec</option>
+            <option value="45" selected>45 sec</option>
+            <option value="60">60 sec</option>
+            <option value="90">90 sec</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Vote Timer</label>
+        <select id="cfg-vote-timer">
+          <option value="20">20 sec</option>
+          <option value="30" selected>30 sec</option>
+          <option value="45">45 sec</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Chaos Events</label>
+        <select id="cfg-chaos">
+          <option value="on" selected>Enabled (Recommended)</option>
+          <option value="off">Disabled</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="UI.showHome()">← Back</button>
+        <button class="btn btn-primary btn-block" onclick="Game.createLobby()">Create Lobby →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: JOIN LOBBY ============ -->
+  <div class="screen" id="join-screen">
+    <div style="text-align:center;margin-bottom:24px">
+      <div class="logo" style="font-size:42px">MINDFCK</div>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Lobby Code</label>
+        <input type="text" id="join-code-input" placeholder="e.g. CHAOS" maxlength="6" style="text-transform:uppercase;font-family:var(--font-mono);font-size:24px;letter-spacing:8px;text-align:center">
+      </div>
+      <div class="divider"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="UI.showHome()">← Back</button>
+        <button class="btn btn-accent btn-block" onclick="Game.joinLobby()">Join Game →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: LOBBY WAITING ============ -->
+  <div class="screen" id="lobby-screen">
+    <div style="text-align:center;margin-bottom:20px">
+      <h2>Lobby</h2>
+      <div style="height:8px"></div>
+      <div class="lobby-code">
+        <span class="lobby-code-text" id="lobby-code-display">----</span>
+        <button class="copy-btn" onclick="Game.copyCode()">Copy</button>
+      </div>
+      <div style="height:6px"></div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px">SHARE THIS CODE WITH FRIENDS</div>
+    </div>
+    <div class="card" style="max-width:420px">
+      <h3>Players</h3>
+      <div style="height:12px"></div>
+      <div id="lobby-player-list" class="player-list"></div>
+      <div class="divider"></div>
+      <div id="lobby-host-controls" style="display:none">
+        <button class="btn btn-primary btn-block btn-lg" onclick="Game.startGame()" id="start-btn" disabled>
+          ⚡ Start Game
+        </button>
+        <div style="height:8px"></div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;letter-spacing:1px">
+          Need at least 2 players
+        </div>
+      </div>
+      <div id="lobby-wait-msg" style="display:none;text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:1px">
+        Waiting for host to start the game…
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: GAME ============ -->
+  <div class="screen" id="game-screen" style="padding:0;justify-content:flex-start">
+    <!-- HUD -->
+    <div id="game-hud">
+      <div class="hud-logo">MINDFCK</div>
+      <div class="hud-spacer"></div>
+      <div class="hud-stat">
+        <span class="hud-stat-label">Round</span>
+        <span class="hud-stat-value" id="hud-round">1/5</span>
+      </div>
+      <div style="width:1px;height:32px;background:var(--border)"></div>
+      <div class="hud-stat">
+        <span class="hud-stat-label">Phase</span>
+        <span class="hud-stat-value" id="hud-phase">SUBMIT</span>
+      </div>
+      <div style="width:1px;height:32px;background:var(--border)"></div>
+      <div class="hud-stat">
+        <span class="hud-stat-label">Timer</span>
+        <span class="hud-stat-value" id="timer-value">45</span>
+      </div>
+      <div style="width:1px;height:32px;background:var(--border)"></div>
+      <div class="hud-stat">
+        <span class="hud-stat-label">Your Points</span>
+        <span class="hud-stat-value" id="hud-mypts">0</span>
+      </div>
+    </div>
+    <!-- Round progress -->
+    <div id="round-progress"><div id="round-progress-fill" style="width:0%"></div></div>
+    <!-- Body -->
+    <div id="game-body">
+      <!-- Sidebar -->
+      <div id="sidebar">
+        <div id="sidebar-title">Players</div>
+        <div id="sidebar-players"></div>
+      </div>
+      <!-- Main -->
+      <div id="game-main">
+
+        <!-- SUBMIT PHASE -->
+        <div class="phase-panel" id="panel-submit">
+          <div id="submit-prompt">
+            <h3>🎯 Your Secret Word</h3>
+            <div id="the-secret-word">---</div>
+            <div id="submit-hint">Mislead everyone. Make them think it's something else.</div>
+          </div>
+          <div class="clue-builder">
+            <label>Your Clue — Emoji, Text, or Anything</label>
+            <textarea id="clue-textarea" placeholder="Type your misleading clue…" maxlength="200"></textarea>
+            <div class="emoji-bar" id="emoji-bar"></div>
+            <button class="btn btn-primary" onclick="Game.submitClue()" id="submit-clue-btn">
+              Submit Clue →
+            </button>
+          </div>
+          <div id="submit-waiting" style="display:none">
+            <div class="wait-box">
+              <div class="wait-spinner"></div>
+              <div class="wait-text">Clue submitted! Waiting for others…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VOTE PHASE -->
+        <div class="phase-panel" id="panel-vote">
+          <div id="submit-prompt" style="background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));border-color:rgba(245,158,11,.3)">
+            <h3>🔍 Guess the Real Word</h3>
+            <div style="font-size:18px;font-weight:600;margin-top:4px" id="vote-round-label">Which clue points to the secret?</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px">
+              One player submitted the <span style="color:var(--success)">honest</span> clue. 
+              Everyone else tried to <span style="color:var(--danger)">deceive you</span>.
+            </div>
+          </div>
+          <div id="vote-area"></div>
+          <div id="vote-waiting" style="display:none">
+            <div class="wait-box">
+              <div class="wait-spinner"></div>
+              <div class="wait-text">Vote cast! Waiting for others…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REVEAL PHASE -->
+        <div class="phase-panel" id="panel-reveal">
+          <div id="reveal-area">
+            <div id="reveal-subtitle">The word was</div>
+            <div id="reveal-word">---</div>
+            <div id="round-scores"></div>
+            <button class="btn btn-primary btn-lg" id="next-round-btn" onclick="Game.nextRound()" style="display:none">
+              Next Round →
+            </button>
+          </div>
+        </div>
+
+        <!-- WAIT PHASE -->
+        <div class="phase-panel" id="panel-wait">
+          <div class="wait-box" style="margin:auto">
+            <div class="wait-spinner"></div>
+            <div class="wait-text">Starting next round…</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- Chat Feed -->
+    <div id="chat-feed"></div>
+
+    <!-- Frame Overlay (Social Pressure Mechanic) -->
+    <div id="frame-overlay">
+      <div id="frame-title">☠️ FRAME SOMEONE!</div>
+      <div id="frame-desc">
+        A chaos event demands you publicly accuse a fellow player.<br>
+        Choose who to frame — they lose 50 points!<br>
+        <span style="color:var(--danger)">If they're innocent, your betrayal count rises.</span>
+      </div>
+      <div class="frame-target-list" id="frame-target-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="Game.skipFrame()">Skip (Coward)</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: FINAL SCORE ============ -->
+  <div class="screen" id="final-screen">
+    <div style="text-align:center">
+      <div class="logo" style="font-size:52px">GAME OVER</div>
+      <div class="logo-sub">Final Scores</div>
+    </div>
+    <div id="final-board"></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" onclick="Game.playAgain()">⚡ Play Again</button>
+      <button class="btn btn-ghost" onclick="UI.showHome()">🏠 Home</button>
+    </div>
+  </div>
+
+</div><!-- end #app -->
+
+<!-- ============ CHAOS BANNER ============ -->
+<div id="chaos-banner">
+  <div id="chaos-icon">🌪️</div>
+  <div id="chaos-title">CHAOS EVENT</div>
+  <div id="chaos-desc"></div>
+</div>
+
+<!-- ============ TOAST CONTAINER ============ -->
+<div id="toast-container"></div>
+
+<!-- ============================================================
+     MINDFCK — FULL GAME ENGINE (ES6 Modules via IIFE)
+     ============================================================ -->
+<script>
+'use strict';
+
+/* ============================================
+   engine/StateManager.js (inline module)
+   ============================================ */
+const StateManager = (() => {
+  // Redux-style store using a Map for concurrent state management
+  class Store {
+    constructor(initialState) {
+      this._state = new Map(Object.entries(initialState));
+      this._listeners = new Map();
+      this._history = [];
+    }
+    get(key) { return this._state.get(key); }
+    set(key, value) {
+      const prev = this._state.get(key);
+      // Race condition guard: timestamp-versioned writes
+      const ts = Date.now();
+      const existing = this._state.get('__ts_' + key);
+      if (existing && existing > ts) return; // stale write rejected
+      this._state.set('__ts_' + key, ts);
+      this._state.set(key, value);
+      this._history.push({ key, prev, next: value, ts });
+      const cbs = this._listeners.get(key) || [];
+      cbs.forEach(cb => cb(value, prev));
+    }
+    subscribe(key, cb) {
+      if (!this._listeners.has(key)) this._listeners.set(key, []);
+      this._listeners.get(key).push(cb);
+      return () => {
+        const list = this._listeners.get(key) || [];
+        this._listeners.set(key, list.filter(f => f !== cb));
+      };
+    }
+    getAll() {
+      const out = {};
+      this._state.forEach((v, k) => { if (!k.startsWith('__ts_')) out[k] = v; });
+      return out;
+    }
+    reset(initial) {
+      this._state.clear();
+      Object.entries(initial).forEach(([k, v]) => this._state.set(k, v));
+    }
+  }
+
+  // PlayerProfile schema
+  const makeProfile = (id, name, avatar) => ({
+    id,
+    name,
+    avatar,
+    score: 0,
+    streak: 0,
+    betrayalCount: 0,
+    roundScores: [],
+    isHost: false,
+    hasSubmitted: false,
+    hasVoted: false,
+    clue: null,
+    votedFor: null,
+  });
+
+  // LobbyState schema
+  const makeLobby = (code, hostId, config) => ({
+    code,
+    hostId,
+    config,
+    phase: 'lobby',       // lobby | submit | vote | reveal | final
+    round: 0,
+    totalRounds: config.rounds,
+    currentWord: null,
+    submitterIndex: 0,
+    clues: [],            // [{playerId, text, isHonest}]
+    votes: [],            // [{voterId, targetClueIndex}]
+    players: new Map(),
+    chaosActive: null,
+    framedPlayerId: null,
+  });
+
+  const store = new Store({
+    lobby: null,
+    me: null,
+    timer: 0,
+  });
+
+  return { Store, makeProfile, makeLobby, store };
+})();
+
+/* ============================================
+   engine/GameLogic.js (inline module)
+   ============================================ */
+const GameLogic = (() => {
+  // Word banks by category
+  const WORDS = [
+    'BETRAYAL','SCANDAL','PARADOX','SILENCE','HUNGER','GRAVITY','MEMORY',
+    'THUNDER','PHANTOM','CRYSTAL','SHADOW','SPIRAL','MIRROR','ECLIPSE',
+    'CHAOS','VENOM','RIDDLE','CIPHER','ABYSS','STORM','FEVER','LEGEND',
+    'COSMOS','SPARK','GHOST','FRENZY','MYTH','ORACLE','PLAGUE','SUMMIT',
+    'VOID','REALM','PULSE','BLAZE','TIDE','VORTEX','ECHO','MAZE','FURY',
+    'CROWN','DAGGER','RELIC','OMEN','CURSE','RIFT','FORGE','DUSK','SHROUD'
+  ];
+
+  // Chaos Events
+  const CHAOS_EVENTS = [
+    {
+      id: 'double_points',
+      icon: '⚡',
+      title: 'DOUBLE OR NOTHING',
+      desc: 'All points this round are doubled.',
+      effect: (state) => ({ ...state, pointMultiplier: 2 }),
+    },
+    {
+      id: 'reverse_score',
+      icon: '🔄',
+      title: 'REVERSE REALITY',
+      desc: 'Votes for wrong clues this round ALSO score 20 pts each.',
+      effect: (state) => ({ ...state, reverseReward: true }),
+    },
+    {
+      id: 'blind_vote',
+      icon: '👁️',
+      title: 'BLIND JUSTICE',
+      desc: 'Author names are hidden during voting.',
+      effect: (state) => ({ ...state, blindVote: true }),
+    },
+    {
+      id: 'frame',
+      icon: '☠️',
+      title: 'FRAME SOMEONE',
+      desc: 'Pick a player to publicly betray. They lose 50 points.',
+      effect: (state) => ({ ...state, frameActive: true }),
+    },
+    {
+      id: 'steal',
+      icon: '💀',
+      title: 'POINT THIEF',
+      desc: 'The most-voted wrong clue author STEALS 30 pts from the round winner.',
+      effect: (state) => ({ ...state, stealActive: true }),
+    },
+    {
+      id: 'honest_bonus',
+      icon: '✨',
+      title: 'TRUTH SERUM',
+      desc: 'The honest submitter earns +100 pts if nobody guesses correctly.',
+      effect: (state) => ({ ...state, honestBonus: true }),
+    },
+  ];
+
+  // Pure scoring function
+  const calculateRoundScores = (clues, votes, players, config = {}) => {
+    const deltas = {};
+    players.forEach((_, id) => { deltas[id] = 0; });
+
+    const mult = config.pointMultiplier || 1;
+    const honestClue = clues.find(c => c.isHonest);
+    if (!honestClue) return deltas;
+
+    const honestIdx = clues.indexOf(honestClue);
+
+    // Votes for the honest clue = correct guesses
+    const correctVotes = votes.filter(v => v.targetClueIndex === honestIdx);
+    const wrongVotes   = votes.filter(v => v.targetClueIndex !== honestIdx);
+
+    // Correct guessers earn points
+    correctVotes.forEach(v => {
+      deltas[v.voterId] = (deltas[v.voterId] || 0) + Math.round(100 * mult);
+    });
+
+    // Deceiver scores: per wrong vote for their clue
+    clues.forEach((clue, idx) => {
+      if (clue.isHonest) return;
+      const fooled = votes.filter(v => v.targetClueIndex === idx).length;
+      deltas[clue.playerId] = (deltas[clue.playerId] || 0) + Math.round(fooled * 75 * mult);
+    });
+
+    // Honest submitter bonus if nobody guessed correctly
+    if (config.honestBonus && correctVotes.length === 0) {
+      deltas[honestClue.playerId] = (deltas[honestClue.playerId] || 0) + 100;
+    }
+
+    // Reverse reward: wrong vote earns 20
+    if (config.reverseReward) {
+      wrongVotes.forEach(v => {
+        deltas[v.voterId] = (deltas[v.voterId] || 0) + 20;
+      });
+    }
+
+    // Point thief: most-voted wrong clue author steals 30 from winner
+    if (config.stealActive) {
+      const wrongClueVotes = {};
+      wrongVotes.forEach(v => {
+        wrongClueVotes[v.targetClueIndex] = (wrongClueVotes[v.targetClueIndex] || 0) + 1;
+      });
+      const topWrongIdx = Object.entries(wrongClueVotes).sort((a,b) => b[1]-a[1])[0];
+      if (topWrongIdx) {
+        const thief = clues[Number(topWrongIdx[0])];
+        const victim = Object.entries(deltas).sort((a,b) => b[1]-a[1])[0];
+        if (thief && victim) {
+          deltas[thief.playerId] = (deltas[thief.playerId] || 0) + 30;
+          deltas[victim[0]] = (deltas[victim[0]] || 0) - 30;
+        }
+      }
+    }
+
+    return deltas;
+  };
+
+  const getRandomWord = () => WORDS[Math.floor(Math.random() * WORDS.length)];
+  const getRandomChaos = () => CHAOS_EVENTS[Math.floor(Math.random() * CHAOS_EVENTS.length)];
+  const shouldTriggerChaos = () => Math.random() < 0.45; // 45% chance per round
+
+  return { calculateRoundScores, getRandomWord, getRandomChaos, shouldTriggerChaos, CHAOS_EVENTS };
+})();
+
+/* ============================================
+   ui/ComponentLibrary.js (inline module)
+   ============================================ */
+const ComponentLibrary = (() => {
+
+  const AVATARS = ['🦊','🐺','🐉','🦁','🐯','🦅','🦇','🦄','👾','🤖','🎭','💀','🐙','🦂','🌊','🔮'];
+
+  const EMOJIS = ['😈','🤥','💀','🎭','🌀','⚡','💥','🔥','❓','🎪','🎰','🎲','💣','🕳️','🌪️','🔱'];
+
+  const renderAvatarPicker = (container, selected, onChange) => {
+    container.innerHTML = '';
+    AVATARS.forEach(av => {
+      const btn = document.createElement('button');
+      btn.textContent = av;
+      btn.className = 'emoji-btn';
+      btn.style.cssText = `font-size:24px;padding:8px 10px;${av === selected ? 'border-color:var(--primary);background:rgba(124,58,237,.2);box-shadow:0 0 10px var(--glow)' : ''}`;
+      btn.onclick = () => {
+        container.querySelectorAll('.emoji-btn').forEach(b => {
+          b.style.borderColor = '';b.style.background = '';b.style.boxShadow = '';
+        });
+        btn.style.borderColor = 'var(--primary)';
+        btn.style.background = 'rgba(124,58,237,.2)';
+        btn.style.boxShadow = '0 0 10px var(--glow)';
+        onChange(av);
+      };
+      container.appendChild(btn);
+    });
+  };
+
+  const renderEmojiBar = (container, onInsert) => {
+    container.innerHTML = '';
+    EMOJIS.forEach(em => {
+      const btn = document.createElement('button');
+      btn.textContent = em;
+      btn.className = 'emoji-btn';
+      btn.title = 'Insert emoji';
+      btn.onclick = () => onInsert(em);
+      container.appendChild(btn);
+    });
+  };
+
+  const renderSidebarPlayers = (container, players, myId) => {
+    container.innerHTML = '';
+    const sorted = [...players.values()].sort((a,b) => b.score - a.score);
+    sorted.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'sb-player' + (p.id === myId ? ' me' : '');
+      div.innerHTML = `
+        <div class="sb-player-avatar">${p.avatar || '🎭'}</div>
+        <div class="sb-player-info">
+          <div class="sb-player-name">${escHtml(p.name)}${p.id === myId ? ' <span style="color:var(--primary);font-size:9px">(you)</span>' : ''}${p.isHost ? ' 👑' : ''}</div>
+          <div class="sb-player-score">${p.score} pts</div>
+          ${p.streak > 1 ? `<div class="sb-player-streak">🔥 ${p.streak} streak</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+          ${p.hasSubmitted ? '<span class="badge badge-success" style="font-size:8px">✓</span>' : '<span class="badge badge-muted" style="font-size:8px">…</span>'}
+          ${p.betrayalCount > 0 ? `<span class="badge badge-danger" style="font-size:8px">${p.betrayalCount}💀</span>` : ''}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  };
+
+  const renderLobbyPlayers = (container, players, myId) => {
+    container.innerHTML = '';
+    players.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'player-item' + (p.isHost ? ' host' : '');
+      div.innerHTML = `
+        <div class="player-avatar">${p.avatar || '🎭'}</div>
+        <div class="player-name">${escHtml(p.name)} ${p.id === myId ? '<span style="color:var(--muted);font-size:11px">(you)</span>' : ''}</div>
+        ${p.isHost ? '<span class="badge badge-primary">Host</span>' : '<span class="badge badge-muted">Player</span>'}
+      `;
+      container.appendChild(div);
+    });
+  };
+
+  const renderVoteCards = (container, clues, blindVote, myId, onVote) => {
+    container.innerHTML = '';
+    // Shuffle clue order to not show honest clue in same position
+    const shuffled = [...clues].sort(() => Math.random() - 0.5);
+    shuffled.forEach((clue, i) => {
+      const card = document.createElement('div');
+      card.className = 'vote-card';
+      card.dataset.idx = clues.indexOf(clue);
+      card.innerHTML = `
+        <div style="flex:1">
+          <div class="vote-clue-text">${escHtml(clue.text)}</div>
+          ${!blindVote && clue.playerId !== myId
+            ? `<div class="vote-author">by ${escHtml(clue.playerName)}</div>`
+            : clue.playerId === myId
+              ? `<div class="vote-author" style="color:var(--primary)">Your own clue</div>`
+              : ''}
+          <div class="vote-bar"><div class="vote-bar-fill" id="vbar-${i}"></div></div>
+          <div class="vote-count" id="vcount-${i}"></div>
+        </div>
+      `;
+      if (clue.playerId !== myId) {
+        card.onclick = () => {
+          if (card.classList.contains('voted')) return;
+          container.querySelectorAll('.vote-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          onVote(clues.indexOf(clue), card);
+        };
+      } else {
+        card.style.opacity = '0.6';
+        card.style.cursor = 'default';
+        card.title = "Can't vote for your own clue";
+      }
+      container.appendChild(card);
+    });
+  };
+
+  const revealVoteResults = (container, clues, votes, honestIdx) => {
+    container.querySelectorAll('.vote-card').forEach(card => {
+      card.classList.add('voted');
+      const idx = Number(card.dataset.idx);
+      const votesForThis = votes.filter(v => v.targetClueIndex === idx).length;
+      const pct = votes.length > 0 ? Math.round((votesForThis / votes.length) * 100) : 0;
+      const fillEl = card.querySelector('.vote-bar-fill');
+      const countEl = card.querySelector('[id^="vcount-"]');
+      if (fillEl) { fillEl.style.width = pct + '%'; fillEl.style.background = idx === honestIdx ? 'var(--success)' : 'var(--danger)'; }
+      if (countEl) countEl.textContent = `${votesForThis} vote${votesForThis !== 1 ? 's' : ''} (${pct}%)`;
+      card.classList.add(idx === honestIdx ? 'correct-reveal' : 'wrong-reveal');
+    });
+  };
+
+  const renderFinalBoard = (container, players) => {
+    container.innerHTML = '';
+    const sorted = [...players.values()].sort((a,b) => b.score - a.score);
+    sorted.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = `final-row rank-${i+1}`;
+      row.style.animationDelay = `${i * 0.12}s`;
+      row.innerHTML = `
+        <div class="final-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i+1}</div>
+        <div class="final-avatar">${p.avatar || '🎭'}</div>
+        <div>
+          <div class="final-name">${escHtml(p.name)}</div>
+          <div class="final-betrayals">${p.betrayalCount > 0 ? `${p.betrayalCount} betrayal${p.betrayalCount > 1 ? 's' : ''}` : 'clean hands'}</div>
+        </div>
+        <div class="final-pts">${p.score} pts</div>
+      `;
+      container.appendChild(row);
+    });
+  };
+
+  const toast = (msg, type = 'info', duration = 3000) => {
+    const container = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), duration);
+  };
+
+  const addChat = (msg, type = 'normal') => {
+    const feed = document.getElementById('chat-feed');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${type}`;
+    div.innerHTML = msg;
+    feed.appendChild(div);
+    feed.scrollTop = feed.scrollHeight;
+    // Keep feed trimmed
+    while (feed.children.length > 30) feed.removeChild(feed.firstChild);
+  };
+
+  const escHtml = (str) => String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  return { AVATARS, EMOJIS, renderAvatarPicker, renderEmojiBar, renderSidebarPlayers, renderLobbyPlayers, renderVoteCards, revealVoteResults, renderFinalBoard, toast, addChat, escHtml };
+})();
+
+/* ============================================
+   controllers/AppController.js (inline module)
+   ============================================ */
+const UI = (() => {
+  const screens = {
+    home: 'home-screen',
+    create: 'create-screen',
+    join: 'join-screen',
+    lobby: 'lobby-screen',
+    game: 'game-screen',
+    final: 'final-screen',
+  };
+
+  const show = (name) => {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screens[name])?.classList.add('active');
+  };
+
+  const showPanel = (name) => {
+    document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name)?.classList.add('active');
+  };
+
+  return {
+    showHome: () => show('home'),
+    showCreateLobby: () => show('create'),
+    showJoinLobby: () => show('join'),
+    showLobby: () => show('lobby'),
+    showGame: () => show('game'),
+    showFinal: () => show('final'),
+    showPanel,
+  };
+})();
+
+/* ============================================
+   GAME CONTROLLER (Master Controller)
+   Handles: player management, syncing via
+   BroadcastChannel (same-device multiplayer)
+   + localStorage for cross-tab persistence
+   ============================================ */
+const Game = (() => {
+  let myProfile = null;
+  let lobby = null;
+  let timerInterval = null;
+  let timerSeconds = 0;
+  let chaosConfig = {};
+  let myAvatar = '🦊';
+  let channel = null;   // BroadcastChannel for real-time sync
+  let isHost = false;
+
+  // ---- INIT ----
+  const init = () => {
+    // Avatar picker
+    ComponentLibrary.renderAvatarPicker(
+      document.getElementById('avatar-picker'),
+      myAvatar,
+      (av) => { myAvatar = av; }
+    );
+
+    // Emoji bar
+    ComponentLibrary.renderEmojiBar(
+      document.getElementById('emoji-bar'),
+      (em) => {
+        const ta = document.getElementById('clue-textarea');
+        const pos = ta.selectionStart;
+        const val = ta.value;
+        ta.value = val.slice(0, pos) + em + val.slice(ta.selectionEnd);
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = pos + em.length;
+      }
+    );
+
+    // Listen for lobby updates from other tabs
+    window.addEventListener('storage', handleStorageEvent);
+  };
+
+  const handleStorageEvent = (e) => {
+    if (!lobby) return;
+    if (e.key === 'mfck_lobby_' + lobby.code) {
+      try {
+        const updated = JSON.parse(e.newValue);
+        if (!updated) return;
+        mergeLobbyUpdate(updated);
+      } catch {}
+    }
+    if (e.key === 'mfck_msg_' + lobby.code) {
+      try {
+        const msg = JSON.parse(e.newValue);
+        if (msg) handleMessage(msg);
+      } catch {}
+    }
+  };
+
+  // ---- LOBBY CODE GENERATOR ----
+  const generateCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
+  // ---- CREATE LOBBY ----
+  const createLobby = () => {
+    const nameInput = document.getElementById('player-name-input').value.trim();
+    if (!nameInput) { ComponentLibrary.toast('Enter your name first!', 'danger'); return; }
+
+    const config = {
+      rounds: parseInt(document.getElementById('cfg-rounds').value),
+      submitTimer: parseInt(document.getElementById('cfg-timer').value),
+      voteTimer: parseInt(document.getElementById('cfg-vote-timer').value),
+      chaos: document.getElementById('cfg-chaos').value === 'on',
+    };
+
+    const code = generateCode();
+    myProfile = StateManager.makeProfile(Date.now() + '_' + Math.random().toString(36).slice(2), nameInput, myAvatar);
+    myProfile.isHost = true;
+    isHost = true;
+
+    lobby = StateManager.makeLobby(code, myProfile.id, config);
+    lobby.players = {};
+    lobby.players[myProfile.id] = myProfile;
+
+    persistLobby();
+    setupChannel(code);
+    UI.showLobby();
+    renderLobbyUI();
+  };
+
+  // ---- JOIN LOBBY ----
+  const joinLobby = () => {
+    const nameInput = document.getElementById('player-name-input').value.trim() ||
+                      document.getElementById('player-name-input').placeholder;
+    const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+    if (!code) { ComponentLibrary.toast('Enter a lobby code!', 'danger'); return; }
+
+    const raw = localStorage.getItem('mfck_lobby_' + code);
+    if (!raw) { ComponentLibrary.toast('Lobby not found. Check the code.', 'danger'); return; }
+
+    const actualName = document.getElementById('player-name-input').value.trim();
+    if (!actualName) { ComponentLibrary.toast('Enter your name first!', 'danger'); return; }
+
+    try {
+      lobby = JSON.parse(raw);
+      if (lobby.phase !== 'lobby') { ComponentLibrary.toast('Game already in progress!', 'danger'); return; }
+    } catch { ComponentLibrary.toast('Invalid lobby.', 'danger'); return; }
+
+    myProfile = StateManager.makeProfile(Date.now() + '_' + Math.random().toString(36).slice(2), actualName, myAvatar);
+    lobby.players[myProfile.id] = myProfile;
+    isHost = false;
+
+    persistLobby();
+    broadcast({ type: 'player_joined', player: myProfile });
+    setupChannel(code);
+    UI.showLobby();
+    renderLobbyUI();
+    ComponentLibrary.toast('Joined lobby ' + code + '!', 'success');
+  };
+
+  const setupChannel = (code) => {
+    // BroadcastChannel for same-device real-time messaging
+    try {
+      channel = new BroadcastChannel('mfck_' + code);
+      channel.onmessage = (e) => handleMessage(e.data);
+    } catch {}
+  };
+
+  const broadcast = (msg) => {
+    try { channel?.postMessage(msg); } catch {}
+    // Also use localStorage for cross-device (same local network isn't possible
+    // without a server, but this ensures same-device cross-tab sync)
+    try {
+      localStorage.setItem('mfck_msg_' + lobby.code, JSON.stringify({ ...msg, _ts: Date.now() }));
+    } catch {}
+  };
+
+  const persistLobby = () => {
+    try {
+      const toSave = { ...lobby, players: lobby.players };
+      localStorage.setItem('mfck_lobby_' + lobby.code, JSON.stringify(toSave));
+    } catch {}
+  };
+
+  const mergeLobbyUpdate = (updated) => {
+    if (!lobby) return;
+    // Merge players
+    if (updated.players) {
+      Object.entries(updated.players).forEach(([id, p]) => {
+        lobby.players[id] = p;
+      });
+    }
+    if (updated.phase && updated.phase !== lobby.phase) {
+      lobby.phase = updated.phase;
+    }
+    renderLobbyUI();
+  };
+
+  const handleMessage = (msg) => {
+    if (!lobby) return;
+    switch (msg.type) {
+      case 'player_joined':
+        lobby.players[msg.player.id] = msg.player;
+        persistLobby();
+        renderLobbyUI();
+        ComponentLibrary.addChat(`<strong>${ComponentLibrary.escHtml(msg.player.name)}</strong> joined the lobby`, 'system');
+        break;
+      case 'game_start':
+        lobby.phase = 'submit';
+        lobby.round = msg.round;
+        lobby.currentWord = msg.word;
+        lobby.submitterIndex = msg.submitterIndex;
+        lobby.clues = [];
+        lobby.votes = [];
+        chaosConfig = msg.chaos || {};
+        Object.values(lobby.players).forEach(p => { p.hasSubmitted = false; p.hasVoted = false; p.clue = null; p.votedFor = null; });
+        persistLobby();
+        startGameUI();
+        break;
+      case 'clue_submitted':
+        lobby.players[msg.playerId].hasSubmitted = true;
+        persistLobby();
+        updateSidebarPlayers();
+        checkAllSubmitted();
+        ComponentLibrary.addChat(`<strong>${getPlayerName(msg.playerId)}</strong> submitted a clue`);
+        break;
+      case 'chaos_event':
+        chaosConfig = msg.chaos;
+        showChaosEvent(msg.chaos);
+        break;
+      case 'enter_vote':
+        lobby.phase = 'vote';
+        lobby.clues = msg.clues;
+        chaosConfig = msg.chaosConfig || chaosConfig;
+        persistLobby();
+        startVotePhase();
+        break;
+      case 'vote_cast':
+        lobby.players[msg.voterId].hasVoted = true;
+        persistLobby();
+        updateSidebarPlayers();
+        checkAllVoted();
+        ComponentLibrary.addChat(`<strong>${getPlayerName(msg.voterId)}</strong> voted`);
+        break;
+      case 'enter_reveal':
+        lobby.phase = 'reveal';
+        lobby.clues = msg.clues;
+        lobby.votes = msg.votes;
+        persistLobby();
+        startRevealPhase(msg.deltas);
+        break;
+      case 'next_round':
+        startRound(msg);
+        break;
+      case 'game_over':
+        lobby.phase = 'final';
+        Object.entries(msg.players).forEach(([id, p]) => { lobby.players[id] = p; });
+        persistLobby();
+        showFinalScreen();
+        break;
+      case 'frame_player':
+        lobby.players[msg.targetId].score -= 50;
+        lobby.players[msg.framedBy].betrayalCount++;
+        persistLobby();
+        updateSidebarPlayers();
+        ComponentLibrary.addChat(`☠️ <strong>${getPlayerName(msg.framedBy)}</strong> FRAMED <strong>${getPlayerName(msg.targetId)}</strong>! -50 pts!`, 'chaos');
+        ComponentLibrary.toast(`${getPlayerName(msg.targetId)} was framed! -50 pts`, 'danger');
+        break;
+    }
+  };
+
+  // ---- LOBBY UI ----
+  const renderLobbyUI = () => {
+    document.getElementById('lobby-code-display').textContent = lobby.code;
+    const players = Object.values(lobby.players);
+    ComponentLibrary.renderLobbyPlayers(
+      document.getElementById('lobby-player-list'),
+      players,
+      myProfile.id
+    );
+    if (isHost) {
+      document.getElementById('lobby-host-controls').style.display = '';
+      document.getElementById('lobby-wait-msg').style.display = 'none';
+      document.getElementById('start-btn').disabled = players.length < 2;
+    } else {
+      document.getElementById('lobby-host-controls').style.display = 'none';
+      document.getElementById('lobby-wait-msg').style.display = '';
+    }
+  };
+
+  const copyCode = () => {
+    navigator.clipboard?.writeText(lobby.code).catch(() => {});
+    ComponentLibrary.toast('Code copied: ' + lobby.code, 'accent');
+  };
+
+  // ---- START GAME ----
+  const startGame = () => {
+    if (!isHost) return;
+    lobby.round = 1;
+    const msg = buildRoundStart(lobby.round);
+    broadcast(msg);
+    handleMessage(msg);
+  };
+
+  const buildRoundStart = (round) => {
+    const word = GameLogic.getRandomWord();
+    const submitterIndex = (round - 1) % Object.keys(lobby.players).length;
+    let chaos = {};
+    if (lobby.config.chaos && GameLogic.shouldTriggerChaos()) {
+      chaos = GameLogic.getRandomChaos();
+    }
+    return {
+      type: 'game_start',
+      round,
+      word,
+      submitterIndex,
+      chaos,
+    };
+  };
+
+  // ---- GAME UI ----
+  const startGameUI = () => {
+    UI.showGame();
+    document.getElementById('hud-round').textContent = `${lobby.round}/${lobby.config.totalRounds}`;
+    document.getElementById('hud-phase').textContent = 'SUBMIT';
+    document.getElementById('hud-mypts').textContent = myProfile.score;
+    updateSidebarPlayers();
+    document.getElementById('chat-feed').innerHTML = '';
+    ComponentLibrary.addChat(`⚡ Round ${lobby.round} begins!`, 'system');
+
+    // Show chaos event if any
+    if (chaosConfig && chaosConfig.id && chaosConfig.id !== 'frame') {
+      showChaosEvent(chaosConfig);
+    }
+    if (chaosConfig && chaosConfig.id === 'frame') {
+      // Frame event: only trigger if this player is a non-host to handle
+      // frame after submit phase starts
+    }
+
+    // Determine if this player is the "honest" submitter this round
+    const playerIds = Object.keys(lobby.players);
+    const submitterId = playerIds[lobby.submitterIndex % playerIds.length];
+    const amIHonest = submitterId === myProfile.id;
+
+    document.getElementById('the-secret-word').textContent = lobby.currentWord;
+    document.getElementById('submit-hint').textContent = amIHonest
+      ? '✅ YOU are the HONEST submitter. Help others guess correctly!'
+      : '🎭 Deceive! Make your clue point to something ELSE entirely.';
+
+    document.getElementById('clue-textarea').value = '';
+    document.getElementById('submit-clue-btn').disabled = false;
+    document.getElementById('submit-waiting').style.display = 'none';
+    document.getElementById('submit-clue-btn').style.display = '';
+    UI.showPanel('submit');
+
+    startTimer(lobby.config.submitTimer, () => {
+      if (!myProfile.hasSubmitted) autoSubmit();
+      if (isHost) checkAllSubmitted(true);
+    });
+  };
+
+  const autoSubmit = () => {
+    const defaults = ['🤔', '❓', '…', '🌀'];
+    const text = defaults[Math.floor(Math.random() * defaults.length)];
+    submitClueText(text);
+  };
+
+  // ---- SUBMIT CLUE ----
+  const submitClue = () => {
+    const text = document.getElementById('clue-textarea').value.trim();
+    if (!text) { ComponentLibrary.toast('Write something first!', 'danger'); return; }
+    submitClueText(text);
+  };
+
+  const submitClueText = (text) => {
+    if (myProfile.hasSubmitted) return;
+    const playerIds = Object.keys(lobby.players);
+    const submitterId = playerIds[lobby.submitterIndex % playerIds.length];
+    const isHonest = submitterId === myProfile.id;
+
+    // Store clue locally (host collects all and broadcasts)
+    const clueObj = {
+      playerId: myProfile.id,
+      playerName: myProfile.name,
+      text,
+      isHonest,
+    };
+    myProfile.hasSubmitted = true;
+    myProfile.clue = clueObj;
+    lobby.players[myProfile.id] = myProfile;
+
+    broadcast({ type: 'clue_submitted', playerId: myProfile.id });
+    persistLobby();
+
+    document.getElementById('submit-clue-btn').style.display = 'none';
+    document.getElementById('submit-waiting').style.display = '';
+    ComponentLibrary.toast('Clue submitted!', 'success');
+    updateSidebarPlayers();
+
+    // Host collects clues from localStorage and transitions to vote
+    if (isHost) {
+      setTimeout(() => checkAllSubmitted(), 300);
+    }
+  };
+
+  const checkAllSubmitted = (force = false) => {
+    if (!isHost) return;
+    const players = Object.values(lobby.players);
+    const allDone = players.every(p => p.hasSubmitted) || force;
+    if (!allDone) return;
+
+    stopTimer();
+
+    // Collect clues from all players' profiles
+    const clues = players.map(p => p.clue).filter(Boolean);
+
+    // Trigger frame chaos if active
+    if (chaosConfig && chaosConfig.id === 'frame') {
+      broadcast({ type: 'chaos_event', chaos: chaosConfig });
+      handleMessage({ type: 'chaos_event', chaos: chaosConfig });
+      setTimeout(() => transitionToVote(clues), 4000);
+    } else {
+      transitionToVote(clues);
+    }
+  };
+
+  const transitionToVote = (clues) => {
+    const msg = {
+      type: 'enter_vote',
+      clues,
+      chaosConfig,
+    };
+    broadcast(msg);
+    handleMessage(msg);
+  };
+
+  // ---- VOTE PHASE ----
+  const startVotePhase = () => {
+    stopTimer();
+    lobby.phase = 'vote';
+    document.getElementById('hud-phase').textContent = 'VOTE';
+    UI.showPanel('vote');
+
+    const voteArea = document.getElementById('vote-area');
+    const blindVote = chaosConfig?.id === 'blind_vote';
+    document.getElementById('vote-waiting').style.display = 'none';
+
+    ComponentLibrary.renderVoteCards(
+      voteArea,
+      lobby.clues,
+      blindVote,
+      myProfile.id,
+      (clueIdx, cardEl) => {
+        castVote(clueIdx, cardEl);
+      }
+    );
+
+    ComponentLibrary.addChat('🗳️ Voting phase! Guess the real clue.', 'system');
+
+    startTimer(lobby.config.voteTimer, () => {
+      if (!myProfile.hasVoted) {
+        // Auto-vote randomly
+        const votable = lobby.clues.filter((_, i) => lobby.clues[i].playerId !== myProfile.id);
+        if (votable.length > 0) {
+          const idx = lobby.clues.indexOf(votable[Math.floor(Math.random() * votable.length)]);
+          castVote(idx, null);
+        }
+        if (isHost) checkAllVoted(true);
+      }
+    });
+  };
+
+  const castVote = (clueIdx, cardEl) => {
+    if (myProfile.hasVoted) return;
+    if (lobby.clues[clueIdx]?.playerId === myProfile.id) {
+      ComponentLibrary.toast("Can't vote for your own clue!", 'danger');
+      return;
+    }
+
+    myProfile.hasVoted = true;
+    myProfile.votedFor = clueIdx;
+    lobby.players[myProfile.id] = myProfile;
+
+    broadcast({ type: 'vote_cast', voterId: myProfile.id, targetClueIndex: clueIdx });
+    persistLobby();
+
+    document.getElementById('vote-waiting').style.display = '';
+    ComponentLibrary.toast('Vote cast!', 'accent');
+    updateSidebarPlayers();
+
+    if (isHost) setTimeout(() => checkAllVoted(), 300);
+  };
+
+  const checkAllVoted = (force = false) => {
+    if (!isHost) return;
+    const players = Object.values(lobby.players);
+    const allDone = players.every(p => p.hasVoted || !p.clue) || force;
+    if (!allDone) return;
+
+    stopTimer();
+
+    // Collect votes from player profiles
+    const votes = players
+      .filter(p => p.votedFor !== null && p.votedFor !== undefined)
+      .map(p => ({ voterId: p.id, targetClueIndex: p.votedFor }));
+
+    // Calculate scores
+    const honestIdx = lobby.clues.findIndex(c => c.isHonest);
+    const deltas = GameLogic.calculateRoundScores(lobby.clues, votes, new Map(Object.entries(lobby.players)), chaosConfig);
+
+    // Apply deltas
+    Object.entries(deltas).forEach(([id, delta]) => {
+      lobby.players[id].score = Math.max(0, (lobby.players[id].score || 0) + delta);
+      if (delta > 0) {
+        lobby.players[id].streak = (lobby.players[id].streak || 0) + 1;
+      } else {
+        lobby.players[id].streak = 0;
+      }
+    });
+
+    persistLobby();
+
+    const msg = {
+      type: 'enter_reveal',
+      clues: lobby.clues,
+      votes,
+      deltas,
+    };
+    broadcast(msg);
+    handleMessage(msg);
+  };
+
+  // ---- REVEAL PHASE ----
+  const startRevealPhase = (deltas) => {
+    stopTimer();
+    lobby.phase = 'reveal';
+    document.getElementById('hud-phase').textContent = 'REVEAL';
+    UI.showPanel('reveal');
+    document.getElementById('reveal-word').textContent = lobby.currentWord;
+    document.getElementById('hud-mypts').textContent = lobby.players[myProfile.id]?.score || myProfile.score;
+
+    const honestIdx = lobby.clues.findIndex(c => c.isHonest);
+    ComponentLibrary.revealVoteResults(
+      document.getElementById('vote-area'),
+      lobby.clues,
+      lobby.votes,
+      honestIdx
+    );
+
+    // Render round score deltas
+    const scoresEl = document.getElementById('round-scores');
+    scoresEl.innerHTML = '';
+    const sorted = Object.values(lobby.players).sort((a,b) => (deltas[b.id]||0) - (deltas[a.id]||0));
+    sorted.forEach(p => {
+      const delta = deltas[p.id] || 0;
+      const row = document.createElement('div');
+      row.className = 'round-score-row';
+      row.innerHTML = `
+        <span>${p.avatar || '🎭'}</span>
+        <span class="round-score-name">${ComponentLibrary.escHtml(p.name)}</span>
+        <span class="round-score-delta ${delta > 0 ? 'delta-pos' : delta < 0 ? 'delta-neg' : 'delta-zero'}">
+          ${delta > 0 ? '+' : ''}${delta} pts
+        </span>
+      `;
+      scoresEl.appendChild(row);
+    });
+
+    const honestClue = lobby.clues[honestIdx];
+    if (honestClue) {
+      ComponentLibrary.addChat(`✅ Honest clue was from <strong>${ComponentLibrary.escHtml(honestClue.playerName)}</strong>: "${ComponentLibrary.escHtml(honestClue.text)}"`, 'system');
+    }
+
+    // Show next round button (host only controls flow)
+    if (isHost) {
+      document.getElementById('next-round-btn').style.display = '';
+      const isLast = lobby.round >= lobby.config.totalRounds;
+      document.getElementById('next-round-btn').textContent = isLast ? '🏆 Final Scores →' : 'Next Round →';
+    } else {
+      document.getElementById('next-round-btn').style.display = 'none';
+    }
+  };
+
+  // ---- NEXT ROUND ----
+  const nextRound = () => {
+    if (!isHost) return;
+    if (lobby.round >= lobby.config.totalRounds) {
+      endGame();
+      return;
+    }
+    lobby.round++;
+    const msg = buildRoundStart(lobby.round);
+    broadcast(msg);
+    handleMessage(msg);
+  };
+
+  const startRound = (msg) => {
+    lobby.round = msg.round;
+    lobby.currentWord = msg.word;
+    lobby.submitterIndex = msg.submitterIndex;
+    lobby.clues = [];
+    lobby.votes = [];
+    chaosConfig = msg.chaos || {};
+    Object.values(lobby.players).forEach(p => { p.hasSubmitted = false; p.hasVoted = false; p.clue = null; p.votedFor = null; });
+    persistLobby();
+    startGameUI();
+  };
+
+  // ---- END GAME ----
+  const endGame = () => {
+    if (!isHost) return;
+    const msg = {
+      type: 'game_over',
+      players: lobby.players,
+    };
+    broadcast(msg);
+    handleMessage(msg);
+  };
+
+  const showFinalScreen = () => {
+    stopTimer();
+    UI.showFinal();
+    ComponentLibrary.renderFinalBoard(document.getElementById('final-board'), new Map(Object.entries(lobby.players)));
+    const winner = Object.values(lobby.players).sort((a,b) => b.score - a.score)[0];
+    if (winner) ComponentLibrary.toast(`🏆 ${winner.name} wins with ${winner.score} pts!`, 'accent', 5000);
+  };
+
+  // ---- CHAOS EVENT ----
+  const showChaosEvent = (chaos) => {
+    if (!chaos?.id) return;
+    const banner = document.getElementById('chaos-banner');
+    document.getElementById('chaos-icon').textContent = chaos.icon || '🌪️';
+    document.getElementById('chaos-title').textContent = chaos.title || 'CHAOS';
+    document.getElementById('chaos-desc').textContent = chaos.desc || '';
+    banner.classList.add('show');
+
+    if (chaos.id === 'frame') {
+      // Show frame overlay after banner dismisses
+      setTimeout(() => {
+        banner.classList.remove('show');
+        showFrameOverlay();
+      }, 2500);
+    } else {
+      setTimeout(() => banner.classList.remove('show'), 3500);
+    }
+  };
+
+  const showFrameOverlay = () => {
+    const overlay = document.getElementById('frame-overlay');
+    const list = document.getElementById('frame-target-list');
+    list.innerHTML = '';
+    Object.values(lobby.players).filter(p => p.id !== myProfile.id).forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'frame-target-btn';
+      btn.innerHTML = `${p.avatar || '🎭'} ${ComponentLibrary.escHtml(p.name)}`;
+      btn.onclick = () => {
+        framePlayer(p.id);
+        overlay.classList.remove('show');
+      };
+      list.appendChild(btn);
+    });
+    overlay.style.position = 'absolute';
+    overlay.classList.add('show');
+  };
+
+  const framePlayer = (targetId) => {
+    lobby.players[targetId].score = Math.max(0, (lobby.players[targetId].score || 0) - 50);
+    lobby.players[myProfile.id].betrayalCount++;
+    myProfile.betrayalCount++;
+    persistLobby();
+    broadcast({ type: 'frame_player', targetId, framedBy: myProfile.id });
+    handleMessage({ type: 'frame_player', targetId, framedBy: myProfile.id });
+  };
+
+  const skipFrame = () => {
+    document.getElementById('frame-overlay').classList.remove('show');
+  };
+
+  // ---- TIMER ----
+  const startTimer = (seconds, onExpire) => {
+    stopTimer();
+    timerSeconds = seconds;
+    const totalSeconds = seconds;
+    updateTimerUI(seconds, totalSeconds);
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerUI(timerSeconds, totalSeconds);
+      if (timerSeconds <= 0) {
+        stopTimer();
+        onExpire?.();
+      }
+    }, 1000);
+  };
+
+  const updateTimerUI = (remaining, total) => {
+    const el = document.getElementById('timer-value');
+    if (!el) return;
+    el.textContent = remaining;
+    el.classList.toggle('urgent', remaining <= 10);
+    const pct = total > 0 ? ((total - remaining) / total) * 100 : 100;
+    const fill = document.getElementById('round-progress-fill');
+    if (fill) fill.style.width = pct + '%';
+  };
+
+  const stopTimer = () => {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  };
+
+  // ---- HELPERS ----
+  const updateSidebarPlayers = () => {
+    ComponentLibrary.renderSidebarPlayers(
+      document.getElementById('sidebar-players'),
+      new Map(Object.entries(lobby.players)),
+      myProfile.id
+    );
+    document.getElementById('hud-mypts').textContent = lobby.players[myProfile.id]?.score || 0;
+  };
+
+  const getPlayerName = (id) => lobby.players[id]?.name || 'Unknown';
+
+  const playAgain = () => {
+    if (!isHost) { ComponentLibrary.toast('Only the host can restart', 'danger'); return; }
+    // Reset scores, go back to lobby
+    Object.values(lobby.players).forEach(p => {
+      p.score = 0; p.streak = 0; p.betrayalCount = 0; p.roundScores = [];
+      p.hasSubmitted = false; p.hasVoted = false; p.clue = null; p.votedFor = null;
+    });
+    lobby.phase = 'lobby';
+    lobby.round = 0;
+    persistLobby();
+    UI.showLobby();
+    renderLobbyUI();
+  };
+
+  return {
+    createLobby, joinLobby, startGame, submitClue, nextRound, playAgain, copyCode,
+    framePlayer, skipFrame,
+  };
+})();
+
+/* ============================================
+   BOOT
+   ============================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Init avatar picker
+  const AVATARS = ['🦊','🐺','🐉','🦁','🐯','🦅','🦇','🦄','👾','🤖','🎭','💀','🐙','🦂','🌊','🔮'];
+  let myAvatar = AVATARS[0];
+  ComponentLibrary.renderAvatarPicker(
+    document.getElementById('avatar-picker'),
+    myAvatar,
+    (av) => { myAvatar = av; }
+  );
+  ComponentLibrary.renderEmojiBar(
+    document.getElementById('emoji-bar'),
+    (em) => {
+      const ta = document.getElementById('clue-textarea');
+      if (!ta) return;
+      const pos = ta.selectionStart || 0;
+      const val = ta.value;
+      ta.value = val.slice(0, pos) + em + val.slice(ta.selectionEnd || pos);
+      ta.focus();
+    }
+  );
+
+  // Patch avatar into game module via input tracking
+  document.getElementById('avatar-picker').addEventListener('click', (e) => {
+    const btn = e.target.closest('.emoji-btn');
+    if (btn) myAvatar = btn.textContent;
+  });
+
+  window.addEventListener('storage', (e) => {
+    // Handled inside Game module
+  });
+});
+</script>
+</body>
+</html>
